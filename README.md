@@ -1,0 +1,2 @@
+README\
+This package will be built for use in analysis of Fuzzy Cognitive Maps. It will replace an existing Microsoft Excel file. this file will be updated with references to explain the theory and computations needed.\

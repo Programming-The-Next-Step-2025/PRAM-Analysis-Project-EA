@@ -1,6 +1,3 @@
-library(roxygen2)
-library(shiny)
-library(readxl)
 #Description: a scrip for data input, output and parsing for the shiny app.
 
 #'Parse uploaded Excel file

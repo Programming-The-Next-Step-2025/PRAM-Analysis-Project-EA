@@ -4,10 +4,6 @@
 # It allows users to upload an Excel file and view a preview.
 # file parsing is handled by `parse_uploaded_file() in R/data_io.R
 
-library(shiny)
-library(readr)
-library(readxl)
-
 #define the user-interface
 ui <- fluidPage(
   fileInput("file1", "Upload Excel file here"),

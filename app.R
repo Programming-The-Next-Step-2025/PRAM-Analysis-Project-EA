@@ -7,44 +7,65 @@
 #access helper functions from the appropriate script
 source("data_io.R")
 
-state <- reactiveValues(
-  data = NULL,
-)
 
 #define the user-interface
 ui <- fluidPage(
+  titlePanel("PRAMtable (Editable Table)"),
   fileInput("file1", "Upload Excel file here"),
-  DTOutput("preview")
+  rHandsontableOutput("preview"),
+  downloadButton("download_data", "Download Edited Excel")
+
 )
+
 #define server logic
 server <- function(input, output, session) {
+  state <- reactiveValues(
+    data = NULL,
+    label_choices = character(),
+  )
+
   #once the file is uploaded, parse and prepare for display
   observeEvent(input$file1, {
     req(input$file1)
     df_full <- parse_uploaded_file(input$file1)
-    state$data <- prepare_shiny_data(df_full)
+    prepped <- prepare_shiny_data(df_full)
+    state$data <- prepped
+    state$label_choices <- unique(prepped$Standared_Node_names)
   })
 
-  #Render an editable table
-  output$preview <- renderDT({
+  # Render editable rhandsontable
+  output$preview <- renderRHandsontable({
     req(state$data)
-    datatable(
-      state$data,
-      editable = list(target = "cell", disable = list(columns = 0:3)), #stop edits of the first two columns
-      )
+    rhandsontable(state$data, useTypes = TRUE, stretchH = "all") %>%
+      hot_col("Standared_Node_names", type = "autocomplete",
+              source = state$label_choices, allowInvalid = TRUE) %>%
+      hot_col("Switch", type = "checkbox") %>%
+      hot_table(highlightCol = TRUE, highlightRow = TRUE)
   })
-  #Record the edits being made and update the reactive data
-  observeEvent(input$preview_cell_edit, {
-    info <- input$preview_cell_edit
-    r <- info$row
-    c <- info$col + 1
-    v <- info$value
 
-    #only permit editing columns 4 and 5
-    if (c %in% c(4,5)) {
-      state$data[r,c] <- coerceValue(v, state$data[r,c])
+  # Track changes and update reactive data
+  observeEvent(input$preview, {
+    updated <- hot_to_r(input$preview)
+    if ("Switch" %in% colnames(updated)) {
+      updated$Switch <- as.logical(updated$Switch)
     }
+    state$data <- updated
+    state$label_choices <- unique(c(state$label_choices, updated$Standared_Node_names))
   })
+  # Download handler to save the edited data as Excel
+  output$download_data <- downloadHandler(
+    filename = function() {
+      paste0("edited_data_", Sys.Date(), ".xlsx")
+    },
+    content = function(file) {
+      req(state$data)
+      writexl::write_xlsx(state$data, path = file)
+    }
+  )
 }
+
+shinyApp(ui, server)
+
+
 #launch the shiny app
 shinyApp(ui, server)

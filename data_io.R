@@ -27,10 +27,11 @@ parse_uploaded_file <- function(file) {
 #' @export
 prepare_shiny_data <- function(df){
   if(ncol(df)>= 3) {
-    prepped_df <- df[, 0:3]
+    prepped_df <- df[, 1:3]
   }
   prepped_df$Standared_Node_names <- ""
-  prepped_df$Switch <- ""
+  prepped_df$Switch <- FALSE
 
   return (prepped_df)
 }
+

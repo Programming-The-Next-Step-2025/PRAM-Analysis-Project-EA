@@ -1,27 +1,18 @@
-# app.R
-# -----------------------------
-# This is the main UI/server script for the PRAManalysis Shiny app.
-# It allows users to upload an Excel file and view a preview.
-# file parsing is handled by `parse_uploaded_file() in R/data_io.R
+#' App Server for PRAMtable
+#'
+#' @param input Shiny input
+#' @param output Shiny output
+#' @param session Shiny session
+#' @import shiny
+#' @import rhandsontable
+#' @import visNetwork
+#' @importFrom writexl write_xlsx
+#' @export
 
-#access helper functions from the appropriate script
-source("data_io.R")
-
-
-#define the user-interface
-ui <- fluidPage(
-  titlePanel("PRAMtable (Editable Table)"),
-  fileInput("file1", "Upload Excel file here"),
-  rHandsontableOutput("preview"),
-  downloadButton("download_data", "Download Edited Excel")
-
-)
-
-#define server logic
-server <- function(input, output, session) {
+app_server <-  function (input, output, sessionInfo){
   state <- reactiveValues(
     data = NULL,
-    label_choices = character(),
+    label_choices = character()
   )
 
   #once the file is uploaded, parse and prepare for display
@@ -36,7 +27,7 @@ server <- function(input, output, session) {
   # Render editable rhandsontable
   output$preview <- renderRHandsontable({
     req(state$data)
-    rhandsontable(state$data, useTypes = TRUE, stretchH = "all") %>%
+    rhandsontable::rhandsontable(state$data, useTypes = TRUE, stretchH = "all") %>%
       hot_col("Standared_Node_names", type = "autocomplete",
               source = state$label_choices, allowInvalid = TRUE) %>%
       hot_col("Switch", type = "checkbox") %>%
@@ -52,6 +43,31 @@ server <- function(input, output, session) {
     state$data <- updated
     state$label_choices <- unique(c(state$label_choices, updated$Standared_Node_names))
   })
+
+  # Render dynamic graph based on dropdown choices
+  output$graph <- visNetwork::renderVisNetwork({
+    req(state$data)
+
+    # Get unique non-empty dropdown values
+    node_names <- unique(trimws(state$data$Standared_Node_names))
+    node_names <- node_names[node_names != ""]
+
+    if (length(node_names) == 0) return(NULL)
+
+    nodes <- data.frame(
+      id = node_names,
+      label = node_names,
+      stringsAsFactors = FALSE
+    )
+
+    # No edges — just nodes
+    visNetwork::visNetwork(nodes, data.frame()) %>%
+      visNetwork::visOptions(highlightNearest = TRUE, nodesIdSelection = TRUE) %>%
+      visNetwork::visPhysics(enabled = FALSE) %>%  # allow dragging
+      visNetwork::visInteraction(dragNodes = TRUE, zoomView = TRUE) %>%
+      visNetwork::visLayout(improvedLayout = FALSE)  # consistent layout
+  })
+
   # Download handler to save the edited data as Excel
   output$download_data <- downloadHandler(
     filename = function() {
@@ -63,9 +79,3 @@ server <- function(input, output, session) {
     }
   )
 }
-
-shinyApp(ui, server)
-
-
-#launch the shiny app
-shinyApp(ui, server)

@@ -5,9 +5,12 @@
 #' @param file An input file for shiny
 #' @return A data.frame
 #' @export
+#' @importFrom readxl read_excel
+#' @importFrom tools file_ext
+#' @importFrom shiny req
 parse_uploaded_file <- function(file) {
   req(file)
-  ext <- tools::file_ext(file$datapath)
+  ext <- file_ext(file$datapath)
   if (ext %in% c("xls", "xlsx")) {
     df <- readxl::read_excel(file$datapath)
     return(df)

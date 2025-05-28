@@ -1,0 +1,87 @@
+---
+title: "Draft Report"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Draft_Report}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r setup}
+library(PRAM.Analysis.Project.EA)
+```
+
+# Introduction
+
+The PRAM.Analysis.Project.EA package provides users an interactive Shiny app where they can upload and edit excel files. It is intended to be used in conjunction with CIETmap, an open source network analysis program. The purpose of this package is to streamline the standardization of nodes.
+
+# Running the App
+
+Users can launch the Shiny app using the function *run_app()*
+
+This opens a simple Shiny interface where you can upload an Excel file, edit node attributes within the table and visualize and cluster unique nodes for categorization. Once you have given standard names to each node, users can download the updated excel file for further processing in CIETmap.
+
+# Input File Format
+
+For ease of use with CIETmap, this app only accepts Excel files. The app perserves the first three Excel columns and adds:
+
+## Standared_Node_names:
+
+an editable text field with auto-complete that stores previous choices
+
+## Switch:
+
+a logical toggle to represent the need to switch the relationship if the standard name suggests the opposite relationship to the initial name. For example, if the original node was "Didn't Attend High School" it would need to be switched if the standard name was "Education" so that the correlation is preserved.
+
+### Example:
+
+**FIX THIS EXAMPLE BEFORE FINAL SUBMISSION**
+
+```{r}
+example_file <- system.file("example", "input_data.xlsx", package = "PRAM.Analysis.Project.EA") 
+df <- parse_uploaded_file(list(datapath = example_file)) 
+prepared <- prepare_shiny_data(df) head(prepared)
+```
+
+# Editing the Table in the Table
+
+-   Users can edit the table directly within the app.
+
+-   The column *Standared_Node_names* supports auto-complete.
+
+-   The *Switch* column is a check-box that is set to TRUE.
+
+-   Clicking **Download** saves user's changes
+
+## Visualizing Node Groupings
+
+Once you've created a list of standard names, it still may be necessary to reduce the number of nodes through categorization. this is made easier by the ability to group similar nodes together when deciding if they belong in the same category.
+
+an example of how this works uses visNetwork:
+
+**MAKE THIS EXAMPLE WORK TOO**
+
+```{r}
+labels <- unique(prepared$Standared_Node_names)
+nodes <- data.frame(id = labels, label = labels)
+edges <- data.frame(from = head(labels, -1), to = tail(labels, -1))
+
+visNetwork::visNetwork(nodes, edges)
+```
+
+#Steps Summary
+
+1.  Upload your Excel Data
+
+2.  Annotate it using dropdown menus and check boxes.
+
+3.  View all the unique nodes and move them around in the whiteboard
+
+4.  Download the file for further analysis.

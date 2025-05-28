@@ -9,9 +9,16 @@
 #' @importFrom tools file_ext
 #' @importFrom shiny req
 parse_uploaded_file <- function(file) {
-  req(file)
-  ext <- file_ext(file$datapath)
+
+  # Accept either a shiny file input (list with $datapath) or a file path string
+  path <- if (is.list(file) && !is.null(file$datapath)) file$datapath else file
+
+  ext <- tools::file_ext(path)
   if (ext %in% c("xls", "xlsx")) {
+    df <- readxl::read_excel(path)
+    return(df)
+
+  } else {
     df <- readxl::read_excel(file$datapath)
     return(df)
  } else {

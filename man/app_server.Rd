@@ -4,6 +4,7 @@
 \alias{app_server}
 \title{App Server for PRAMtable}
 \usage{
+
 app_server(input, output, sessionInfo)
 }
 \arguments{

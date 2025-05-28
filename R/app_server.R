@@ -9,11 +9,24 @@
 #' @importFrom writexl write_xlsx
 #' @export
 
+
+
 app_server <-  function (input, output, sessionInfo){
   state <- reactiveValues(
     data = NULL,
     label_choices = character()
   )
+
+
+  # Load example Excel file when button is clicked
+  observeEvent(input$load_example, {
+    example_path <- "www/Unlabeled_Excel_Sheet.xlsx"  # relative path to example file
+    df_full <- parse_uploaded_file(example_path)       # just pass the path string
+    prepped <- prepare_shiny_data(df_full)
+    state$data <- prepped
+    state$label_choices <- unique(prepped$Standared_Node_names)
+  })
+
 
   #once the file is uploaded, parse and prepare for display
   observeEvent(input$file1, {

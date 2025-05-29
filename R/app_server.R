@@ -4,6 +4,7 @@
 #' @param output Shiny output
 #' @param session Shiny session
 #' @import shiny
+#' @import shinyjs
 #' @import rhandsontable
 #' @import visNetwork
 #' @importFrom writexl write_xlsx
@@ -16,7 +17,13 @@ app_server <-  function (input, output, sessionInfo){
     data = NULL,
     label_choices = character()
   )
-
+  #reset the inputs if the app gets buggy
+  observeEvent(input$reset_inputs, {
+    shinyjs::enable("file1")
+    shinyjs::enable("load_example")
+    state$data <- NULL
+    state$label_choices <- character()
+  })
 
   # Load example Excel file when button is clicked
   observeEvent(input$load_example, {

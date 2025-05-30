@@ -13,6 +13,5 @@ prepare_shiny_data(df)
 a data.frame with the any existing columns intact and two added columns
 }
 \description{
-Takes the full data.frame and then subsets the 3 static columns and adds empty
-columns for the new information.
+Takes the full data.frame and adds empty columns for the new information.
 }

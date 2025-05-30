@@ -24,8 +24,7 @@ parse_uploaded_file <- function(file) {
 
 #' Prepare Data for Shiny app
 #'
-#' Takes the full data.frame and then subsets the 3 static columns and adds empty
-#' columns for the new information.
+#' Takes the full data.frame and adds empty columns for the new information.
 #'
 #' @param df a data.frame, the same one previously parsed
 #' @return a data.frame with the any existing columns intact and two added columns
@@ -41,14 +40,18 @@ prepare_shiny_data <- function(df) {
   # Add Switch column if missing
   if (!"Switch" %in% names(df)) {
     df$Switch <- FALSE
+  } else {
+    df$Switch <- as.logical(df$Switch)
   }
-  # Add categories column if missing — default empty string or could be NA
+  # Add categories column if missing, default empty string NA
   if (!"Categories" %in% names(df)) {
     df$Categories <- ""
   }
-  # Add switch_category column if missing — default FALSE logical
+  # Add switch_category column if missing, default FALSE
   if (!"Switch_Category" %in% names(df)) {
     df$Switch_Category <- FALSE
+  } else {
+    df$Switch_Category <- as.logical(df$Switch_Category)
   }
   return(df)
 }
@@ -56,7 +59,7 @@ prepare_shiny_data <- function(df) {
 #' function that wraps loading and parsing to clean the server script
 #'
 #' @param file a file path or shiny input list
-#' @return prepared data.fram
+#' @return prepared data.frame
 #' @export
 load_and_prepare_data <- function(file) {
   df <- parse_uploaded_file(file)
@@ -80,8 +83,17 @@ get_unique_choices <- function(vec) {
 #' @param df data.frame with Standared_Node_names and categories columns
 #' @export
 update_choices <- function(state, df) {
-  state$label_choices <- unique(c(state$label_choices, df$Standared_Node_names))
-  state$label_choices <- get_unique_choices(state$label_choices)
-  state$category_choices <- unique(c(state$category_choices, df$Categories))
-  state$category_choices <- get_unique_choices(state$category_choices)
+  update_one <- function(column, target) {
+    if (column %in% names(df)) {
+      vals <- unique(trimws(df[[column]]))
+      vals <- vals[vals != ""]
+      state[[target]] <- unique(c(state[[target]], vals))
+    }
+  }
+
+  if (is.data.frame(df)) {
+    update_one("Standared_Node_names", "label_choices")
+    update_one("Categories", "category_choices")
+  }
 }
+

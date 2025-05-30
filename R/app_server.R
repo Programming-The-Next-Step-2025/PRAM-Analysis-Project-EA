@@ -15,7 +15,7 @@ app_server <-  function (input, output, sessionInfo){
     label_choices = character(),
     category_choices = character()
   )
-  #reset the inputs if the app gets buggy
+  #reset the inputs if the app tries to load more than one file at once
   observeEvent(input$reset_inputs, {
     enable("file1")
     enable("load_example")
@@ -45,23 +45,39 @@ app_server <-  function (input, output, sessionInfo){
   output$preview <- renderRHandsontable({
     req(state$data)
     rhandsontable(state$data, useTypes = TRUE, stretchH = "all") %>%
+
+      #first new column has a dropdown list which updates as you edit the sheet
       hot_col("Standared_Node_names", type = "autocomplete",
               source = state$label_choices, allowInvalid = TRUE) %>%
+
+      #second new column is a checkbox
       hot_col("Switch", type = "checkbox") %>%
+
+      #third new column has a dropdown list which updates as you edit the sheet
       hot_col("Categories", type = "autocomplete",
-              source = state$category_choices) %>%
+              source = state$category_choices, allowInvalid = TRUE) %>%
+
+      #fourth new column is a checkbox
       hot_col("Switch_Category", type = "checkbox") %>%
+
+      #highlight where the user is editingfor clarity
       hot_table(highlightCol = TRUE, highlightRow = TRUE)
   })
 
   # Track changes and update reactive data
   observeEvent(input$preview, {
     updated <- hot_to_r(input$preview)
-    #convert checkboxes to logicals
-    if ("Switch" %in% colnames(updated)) updated$Switch <- as.logical(updated$Switch)
-    if ("Switch_Category" %in% colnames(updated)) updated$Switch_Category <- as.logical(updated$Switch_Category)
+
+    # Ensure checkbox columns are logical
+    for (col in c("Switch", "Switch_Category")) {
+      if (col %in% names(updated)) {
+        updated[[col]] <- as.logical(updated[[col]])
+      }
+    }
 
     state$data <- updated
+
+    # Use your helper to update choices
     update_choices(state, updated)
   })
 
@@ -81,7 +97,7 @@ app_server <-  function (input, output, sessionInfo){
       stringsAsFactors = FALSE
     )
 
-    # No edges — just nodes
+    # No edges, just nodes
     visNetwork(nodes, data.frame()) %>%
       visOptions(highlightNearest = TRUE, nodesIdSelection = TRUE) %>%
       visPhysics(enabled = FALSE) %>%  # allow free dragging

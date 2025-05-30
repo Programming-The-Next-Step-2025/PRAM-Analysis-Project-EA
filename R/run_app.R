@@ -2,7 +2,7 @@
 #'
 #' @import shiny
 #' @export
-run_app <- function() {
+run_PRAM_table <- function() {
   shinyApp(ui= app_ui(), server = app_server)
 }
 

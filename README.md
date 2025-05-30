@@ -18,68 +18,95 @@ install.packages("devtools")
 devtools::install_github("Programming-The-Next-Step-2025/PRAM-Analysis-Project-EA")
 ```
 
-## Usage
+# Usage
 
 After installing the package you can begin using it to launch the Shiny app:
 
 ```{r}
 library(PRAMAnalysis)
 #launch the Shiny app 
-run_app()
+run_PRAM_table()
 ```
 
-### Start up
+## Start up
 
 This is what the user interface(UI) will look like on start up:
 
-![](Screenshots/Startup%20UI.png)
+![](Screenshots/UI%20startup.png)
 
-From here you can click the button to browse your computor for any Excel file using the first button.
+From here you can click the button to browse your computer for any CSV or Excel file using the upload button.
 
-### Behind the Scenes (Data Parsing)
+## Editing the Table
 
-### `parse_uploaded_file()`
+You can use the example to preview what the table will look like. for this image I have
 
-This function handles Excel file uploads in the Shiny app.
+![](Screenshots/Example%20Load.png)
 
-**Purpose**: It checks the uploaded file’s format and reads it into R as a data frame,
+As you can see the table has 4 new columns where you can add the names and switch the edges.
 
-**How it works**:
+Once you've given each Node a new Label you'll see a visualization of how many unique standard names you've made!![](Screenshots/example%20network%20vis+category.png)
 
--   Uses `shiny::req()` to ensure a file is provided.
+then you can group the standard names together and assign new category labels taking this simple example network from 10 nodes down to 2 categories!
 
--   Validates that the file has an Excel-compatible extension (`.xls` or `.xlsx`).
+### Behind the Scenes (Functions)
 
--   Reads the Excel file using `readxl::read_excel()`.
+#### `parse_uploaded_file()`
 
--   Returns the parsed data as a `data.frame` for use in the app.
-
--   if a user uploads a file that isn't supported it will return an error
-
-### `prepare_shiny_data()`
-
-Once the data is uploaded, this function formats it for use in the app’s interface.
-
-**Purpose**: It subsets the first three columns of the uploaded data (assumed to be static) and adds new columns to facilitate labeling and toggling in the UI.
+**Purpose**: This function handles data file uploads in the Shiny app. It supports .csv and Excel files (.xls, .xlsx), reads them into R as a data.frame, and ensures consistent parsing regardless of format.
 
 **How it works**:
 
--   Extracts the first three columns (e.g., ID, concept, weight)
+-   Accepts a Shiny file input (input\$file) or a string path.
 
-    Adds:
+-   Detects the file extension using tools::file_ext.
 
-    -   Standared_Node_names\`: a blank text column for standardized naming(based on the output of CIETmap.
+-   Uses readxl::read_excel() to parse .xls or .xlsx, and readr::read_csv() to parse .csv.
 
-    -   `Switch`: a Boolean column for toggling edge weight direction (+/-).
+-   If the file extension is unsupported, throws an informative error.
 
-# Editing the Table
+-   Returns a data.frame ready for further processing.
 
-You can use the example to preview what the table will look like
+#### `prepare_shiny_data()`
 
-![](Screenshots/Example%20Ui.png)
+**Purpose**: This function formats the uploaded data for interactive use in the Shiny interface. It ensures required columns exist, cleans column names, and appends fields used in UI inputs.
 
-As you can see the table had 2 columns where you can add the names and switch the edges.
+**How it works**:
 
-Once you've given each Node a new Label you'll see a visualization of how many unique standard names you've made!
+-   Cleans column names by trimming whitespace and replacing spaces with underscores.
 
-![](Screenshots/Filled%20in%20Example.png)
+-   Checks for required columns and adds them if missing:
+
+    -   Standared_Node_names: a character column for standardized naming.
+
+    -   Switch: a logical column (TRUE/FALSE) used as a checkbox toggle.
+
+    -   Categories: a character column for user-defined categories (used in dropdown/autocomplete).
+
+    -   Switch_Category: a logical column (TRUE/FALSE) toggle related to category use.
+
+-   Returns the modified data.frame with all necessary columns.
+
+#### `update_choices(state, df)`
+
+**Purpose:**\
+Updates the available dropdown/autocomplete options (`Standared_Node_names`, `Categories`) based on user input and changes in the handsontable.
+
+**How it works:**
+
+-   Accepts the `reactiveValues` object (`state`) and a data frame (`df`).
+
+-   Scans the columns `Standared_Node_names` and `Categories` for new unique values.
+
+-   Adds those values to `state$label_choices` and `state$category_choices`, respectively.
+
+-   Uses `get_unique_choices()` to trim whitespace and remove blanks.
+
+#### `get_unique_choices(x)`
+
+**Purpose:** Sanitizes dropdown/autocomplete options.
+
+**How it works:** - Accepts a vector x.
+
+-   Trims leading/trailing whitespace and removes "" (blank) entries.
+
+-   Returns sorted, deduplicated values.

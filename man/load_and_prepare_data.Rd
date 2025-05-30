@@ -10,7 +10,7 @@ load_and_prepare_data(file)
 \item{file}{a file path or shiny input list}
 }
 \value{
-prepared data.fram
+prepared data.frame
 }
 \description{
 function that wraps loading and parsing to clean the server script

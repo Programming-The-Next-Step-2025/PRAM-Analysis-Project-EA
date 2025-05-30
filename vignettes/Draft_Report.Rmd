@@ -1,5 +1,5 @@
 ---
-title: "Draft Report"
+title: "Report"
 output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{Draft_Report}
@@ -7,78 +7,84 @@ vignette: >
   %\VignetteEncoding{UTF-8}
 ---
 
-```{r, include = FALSE}
+```{r setup, include = FALSE}
 knitr::opts_chunk$set(
   collapse = TRUE,
   comment = "#>"
 )
-```
 
-```{r setup}
+# Load the package the vignette belongs to
 library(PRAM.Analysis.Project.EA)
 ```
 
 # Introduction
 
-The PRAM.Analysis.Project.EA package provides users an interactive Shiny app where they can upload and edit excel files. It is intended to be used in conjunction with CIETmap, an open source network analysis program. The purpose of this package is to streamline the standardization of nodes.
+The PRAM.Analysis.Project.EA package provides users an interactive Shiny app where they can upload and edit Excel and CSV files. It is intended to be used in conjunction with CIETmap, an open source network analysis program. The purpose of this package is to streamline the standardization of nodes.
 
 # Running the App
 
-Users can launch the Shiny app using the function *run_app()*
+Users can launch the Shiny app using the function *run_PRAM_table()*
 
-This opens a simple Shiny interface where you can upload an Excel file, edit node attributes within the table and visualize and cluster unique nodes for categorization. Once you have given standard names to each node, users can download the updated excel file for further processing in CIETmap.
+This opens a simple Shiny interface where you can upload a file, edit node attributes including *standard* *name* and *category* within the table and visualize and cluster unique nodes for categorization. Once you have given standard names to each node, users can download the updated file for further processing in CIETmap.
 
 # Input File Format
 
-For ease of use with CIETmap, this app only accepts Excel files. The app perserves the first three Excel columns and adds:
+This app accepts Excel and Comma Separated Value files. For ease of use with CIETmap, this app only exports Excel files. The app does not change existing data and only adds 4 new columns:
 
 ## Standared_Node_names:
 
-an editable text field with auto-complete that stores previous choices
+An editable text field with auto-complete that stores previous choices as new options in the dropdown
 
 ## Switch:
 
-a logical toggle to represent the need to switch the relationship if the standard name suggests the opposite relationship to the initial name. For example, if the original node was "Didn't Attend High School" it would need to be switched if the standard name was "Education" so that the correlation is preserved.
+A logical toggle to represent the need to switch the relationship if the standard name suggests the opposite relationship to the initial name. For example, if the original node was "Didn't Attend High School" it would need to be switched if the standard name was "Education" so that the correlation is preserved. FALSE is set by default, clicking swich sets the value to 'TRUE'
+
+## Categories:
+
+An editable text field with auto-complete that stores previous choices to represent the category of the node.
+
+## Category_Switch:
+
+A logical toggle to represent the need to switch the relationship if the standard name suggests the opposite relationship to the category name FALSE is set by default, clicking switch sets the value to 'TRUE'
 
 ### Example:
 
-**FIX THIS EXAMPLE BEFORE FINAL SUBMISSION**
-
 ```{r}
-example_file <- system.file("example", "input_data.xlsx", package = "PRAM.Analysis.Project.EA") 
-df <- parse_uploaded_file(list(datapath = example_file)) 
-prepared <- prepare_shiny_data(df) head(prepared)
+# Example: Load and prepare example data using helper functions
+example_file <- "Unlabeled_Excel_Sheet.xlsx"
+#view the pre-proccessed data
+raw_data <- readxl::read_excel(example_file)
+head(raw_data)
+# Use load_and_prepare_data which wraps parsing and preparing steps
+prepared <- load_and_prepare_data(example_file)
+
+#view the first few rows
+head(prepared)
 ```
 
 # Editing the Table in the Table
 
 -   Users can edit the table directly within the app.
 
--   The column *Standared_Node_names* supports auto-complete.
+-   The columns *Standared_Node_names* and *Categories* support auto-complete.
 
--   The *Switch* column is a check-box that is set to TRUE.
+-   The *Switch* and *Category_Switch* column is a check-box that is set to FALSE by default, clicking changes it to TRUE.
 
--   Clicking **Download** saves user's changes
+-   Clicking **Download** downloads user's changes into a new Excel file
 
 ## Visualizing Node Groupings
 
 Once you've created a list of standard names, it still may be necessary to reduce the number of nodes through categorization. this is made easier by the ability to group similar nodes together when deciding if they belong in the same category.
 
-an example of how this works uses visNetwork:
+An example of how this looks using visNetwork:
 
-**MAKE THIS EXAMPLE WORK TOO**
+![](example%20network%20vis+category.png)
 
-```{r}
-labels <- unique(prepared$Standared_Node_names)
-nodes <- data.frame(id = labels, label = labels)
-edges <- data.frame(from = head(labels, -1), to = tail(labels, -1))
+For this example I moved the letters and numbers into groups together and then I can categorize them as "letters" or "numbers"
 
-visNetwork::visNetwork(nodes, edges)
-```
+# Steps Summary
 
-#Steps Summary
-
-1.  Upload your Excel Data
+1.  Upload your Data
 
 2.  Annotate it using dropdown menus and check boxes.
 

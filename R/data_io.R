@@ -17,13 +17,11 @@ parse_uploaded_file <- function(file) {
   if (ext %in% c("xls", "xlsx")) {
     df <- readxl::read_excel(path)
     return(df)
-
   } else {
     df <- readxl::read_excel(file$datapath)
     return(df)
- } else {
-    stop("Unsupported file type")
-  }
+ }
+
 }
 
 
@@ -33,15 +31,23 @@ parse_uploaded_file <- function(file) {
 #' columns for the new information.
 #'
 #' @param df a data.frame, the same one previously parsed
-#' @return a data.frame with the first three columns intact and two empy columns
+#' @return a data.frame with the any existing columns intact and two added columns
 #' @export
-prepare_shiny_data <- function(df){
-  if(ncol(df)>= 3) {
+prepare_shiny_data <- function(df) {
+  if (ncol(df) >= 3) {
     prepped_df <- df[, 1:3]
+  } else {
+    prepped_df <- df
   }
-  prepped_df$Standared_Node_names <- ""
-  prepped_df$Switch <- FALSE
 
-  return (prepped_df)
+  if (!"Standared_Node_names" %in% names(prepped_df)) {
+    prepped_df$Standared_Node_names <- ""
+  }
+
+  if (!"Switch" %in% names(prepped_df)) {
+    prepped_df$Switch <- FALSE
+  }
+
+  return(prepped_df)
 }
 

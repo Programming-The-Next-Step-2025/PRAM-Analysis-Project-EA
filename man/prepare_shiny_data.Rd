@@ -10,7 +10,7 @@ prepare_shiny_data(df)
 \item{df}{a data.frame, the same one previously parsed}
 }
 \value{
-a data.frame with the first three columns intact and two empy columns
+a data.frame with the any existing columns intact and two added columns
 }
 \description{
 Takes the full data.frame and then subsets the 3 static columns and adds empty

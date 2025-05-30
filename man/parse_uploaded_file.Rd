@@ -2,16 +2,16 @@
 % Please edit documentation in R/data_io.R
 \name{parse_uploaded_file}
 \alias{parse_uploaded_file}
-\title{Parse uploaded Excel file}
+\title{Parse uploaded file (.csv or .xlsx)}
 \usage{
 parse_uploaded_file(file)
 }
 \arguments{
-\item{file}{An input file for shiny}
+\item{file}{A shiny file input (list) or path string}
 }
 \value{
 A data.frame
 }
 \description{
-Parse uploaded Excel file
+Parse uploaded file (.csv or .xlsx)
 }

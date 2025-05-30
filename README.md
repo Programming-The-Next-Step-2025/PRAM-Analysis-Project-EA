@@ -32,7 +32,7 @@ run_app()
 
 This is what the user interface(UI) will look like on start up:
 
-![](Screenshots/Startup UI.png)
+![](Screenshots/Startup%20UI.png)
 
 From here you can click the button to browse your computor for any Excel file using the first button.
 
@@ -76,10 +76,10 @@ Once the data is uploaded, this function formats it for use in the app’s inter
 
 You can use the example to preview what the table will look like
 
-![](Screenshots/Example Ui.png)
+![](Screenshots/Example%20Ui.png)
 
 As you can see the table had 2 columns where you can add the names and switch the edges.
 
 Once you've given each Node a new Label you'll see a visualization of how many unique standard names you've made!
 
-![](Screenshots/Filled in Example.png)
+![](Screenshots/Filled%20in%20Example.png)

@@ -4,68 +4,69 @@
 #' @param output Shiny output
 #' @param session Shiny session
 #' @import shiny
-#' @import shinyjs
+#' @importFrom shinyjs enable disable
 #' @import rhandsontable
 #' @import visNetwork
 #' @importFrom writexl write_xlsx
 #' @export
-
-
-
 app_server <-  function (input, output, sessionInfo){
   state <- reactiveValues(
     data = NULL,
-    label_choices = character()
+    label_choices = character(),
+    category_choices = character()
   )
   #reset the inputs if the app gets buggy
   observeEvent(input$reset_inputs, {
-    shinyjs::enable("file1")
-    shinyjs::enable("load_example")
+    enable("file1")
+    enable("load_example")
     state$data <- NULL
     state$label_choices <- character()
+    state$category_choices <- character()
   })
 
   # Load example Excel file when button is clicked
   observeEvent(input$load_example, {
-    example_path <- "www/Unlabeled_Excel_Sheet.xlsx"  # relative path to example file
-    df_full <- parse_uploaded_file(example_path)       # just pass the path string
-    prepped <- prepare_shiny_data(df_full)
-    state$data <- prepped
-    state$label_choices <- unique(prepped$Standared_Node_names)
+    example_path <- "www/Unlabeled_Excel_Sheet.xlsx"
+    df <- load_and_prepare_data(example_path)
+    state$data <- df
+    update_choices(state, df)
   })
 
 
   #once the file is uploaded, parse and prepare for display
   observeEvent(input$file1, {
     req(input$file1)
-    df_full <- parse_uploaded_file(input$file1)
-    prepped <- prepare_shiny_data(df_full)
-    state$data <- prepped
-    state$label_choices <- unique(prepped$Standared_Node_names)
+    df <- load_and_prepare_data(input$file1)
+    state$data <- df
+    update_choices(state, df)
   })
 
   # Render editable rhandsontable
   output$preview <- renderRHandsontable({
     req(state$data)
-    rhandsontable::rhandsontable(state$data, useTypes = TRUE, stretchH = "all") %>%
+    rhandsontable(state$data, useTypes = TRUE, stretchH = "all") %>%
       hot_col("Standared_Node_names", type = "autocomplete",
               source = state$label_choices, allowInvalid = TRUE) %>%
       hot_col("Switch", type = "checkbox") %>%
+      hot_col("Categories", type = "autocomplete",
+              source = state$category_choices) %>%
+      hot_col("Switch_Category", type = "checkbox") %>%
       hot_table(highlightCol = TRUE, highlightRow = TRUE)
   })
 
   # Track changes and update reactive data
   observeEvent(input$preview, {
     updated <- hot_to_r(input$preview)
-    if ("Switch" %in% colnames(updated)) {
-      updated$Switch <- as.logical(updated$Switch)
-    }
+    #convert checkboxes to logicals
+    if ("Switch" %in% colnames(updated)) updated$Switch <- as.logical(updated$Switch)
+    if ("Switch_Category" %in% colnames(updated)) updated$Switch_Category <- as.logical(updated$Switch_Category)
+
     state$data <- updated
-    state$label_choices <- unique(c(state$label_choices, updated$Standared_Node_names))
+    update_choices(state, updated)
   })
 
   # Render dynamic graph based on dropdown choices
-  output$graph <- visNetwork::renderVisNetwork({
+  output$graph <- renderVisNetwork({
     req(state$data)
 
     # Get unique non-empty dropdown values
@@ -81,11 +82,11 @@ app_server <-  function (input, output, sessionInfo){
     )
 
     # No edges — just nodes
-    visNetwork::visNetwork(nodes, data.frame()) %>%
-      visNetwork::visOptions(highlightNearest = TRUE, nodesIdSelection = TRUE) %>%
-      visNetwork::visPhysics(enabled = FALSE) %>%  # allow dragging
-      visNetwork::visInteraction(dragNodes = TRUE, zoomView = TRUE) %>%
-      visNetwork::visLayout(improvedLayout = FALSE)  # consistent layout
+    visNetwork(nodes, data.frame()) %>%
+      visOptions(highlightNearest = TRUE, nodesIdSelection = TRUE) %>%
+      visPhysics(enabled = FALSE) %>%  # allow free dragging
+      visInteraction(dragNodes = TRUE, zoomView = TRUE) %>%
+      visLayout(improvedLayout = FALSE)  # consistent layout
   })
 
   # Download handler to save the edited data as Excel
@@ -95,7 +96,7 @@ app_server <-  function (input, output, sessionInfo){
     },
     content = function(file) {
       req(state$data)
-      writexl::write_xlsx(state$data, path = file)
+      write_xlsx(state$data, path = file)
     }
   )
 }
